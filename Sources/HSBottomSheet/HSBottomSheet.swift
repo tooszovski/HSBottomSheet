@@ -1,18 +1,18 @@
 import UIKit
 
 public enum SheetSize {
-    case fixed(CGFloat)
-    case halfScreen
-    case fullScreen
+  case fixed(CGFloat)
+  case halfScreen
+  case fullScreen
 }
 
 class InitialTouchPanGestureRecognizer: UIPanGestureRecognizer {
-    var initialTouchLocation: CGPoint?
+  var initialTouchLocation: CGPoint?
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
-        super.touchesBegan(touches, with: event)
-        initialTouchLocation = touches.first?.location(in: view)
-    }
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+    super.touchesBegan(touches, with: event)
+    initialTouchLocation = touches.first?.location(in: view)
+  }
 }
 
 public class HSBottomSheet: UIViewController {
@@ -44,8 +44,7 @@ public class HSBottomSheet: UIViewController {
   public var extendBackgroundBehindHandle: Bool = false {
     didSet {
       guard isViewLoaded else { return }
-      pullBarView.backgroundColor = extendBackgroundBehindHandle ?
-        childViewController.view.backgroundColor : .clear
+      pullBarView.backgroundColor = extendBackgroundBehindHandle ? childViewController.view.backgroundColor : .clear
       updateRoundedCorners()
     }
   }
@@ -131,31 +130,33 @@ public class HSBottomSheet: UIViewController {
     setUpChildViewController()
     setUpPullBarView()
     updateRoundedCorners()
-    NotificationCenter
-      .default
-      .addObserver(self, selector: #selector(keyboardShown(_:)),
-                   name: UIResponder.keyboardWillChangeFrameNotification,
-                   object: nil)
-    NotificationCenter
-      .default
-      .addObserver(self,
-                   selector: #selector(keyboardDismissed(_:)),
-                   name: UIResponder.keyboardWillHideNotification,
-                   object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(keyboardShown(_:)),
+      name: UIResponder.keyboardWillChangeFrameNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(keyboardDismissed(_:)),
+      name: UIResponder.keyboardWillHideNotification,
+      object: nil
+    )
   }
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    UIView.animate(withDuration: animationDuration,
-                   delay: 0,
-                   options: [.curveEaseOut],
-                   animations: { [weak self] in
-                    guard let `self` = self else { return }
-                    self.view.backgroundColor = self.overlayColor
-                    self.containerView.transform = CGAffineTransform.identity
-                    self.actualContainerSize = .fixed(self.containerView.frame.height)
+    UIView.animate(
+      withDuration: animationDuration,
+      delay: 0,
+      options: [.curveEaseOut],
+      animations: { [weak self] in
+        guard let `self` = self else { return }
+        self.view.backgroundColor = self.overlayColor
+        self.containerView.transform = CGAffineTransform.identity
+        self.actualContainerSize = .fixed(self.containerView.frame.height)
       },
-                   completion: nil)
+      completion: nil
+    )
   }
 
   public func setSizes(_ sizes: [SheetSize], animated: Bool = true) {
@@ -170,15 +171,17 @@ public class HSBottomSheet: UIViewController {
 
   public func resize(to size: SheetSize, animated: Bool = true) {
     if animated {
-      UIView.animate(withDuration: 0.2,
-                     delay: 0,
-                     options: [.curveEaseOut],
-                     animations: { [weak self] in
-                      guard let `self` = self, let constraint = self.containerHeightConstraint else { return }
-                      constraint.constant = self.height(for: size)
-                      self.view.layoutIfNeeded()
+      UIView.animate(
+        withDuration: 0.2,
+        delay: 0,
+        options: [.curveEaseOut],
+        animations: { [weak self] in
+          guard let `self` = self, let constraint = self.containerHeightConstraint else { return }
+          constraint.constant = self.height(for: size)
+          self.view.layoutIfNeeded()
         },
-                     completion: nil)
+        completion: nil
+      )
     } else {
       containerHeightConstraint?.constant = self.height(for: size)
     }
@@ -194,12 +197,14 @@ public class HSBottomSheet: UIViewController {
         .maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
       return
     }
-      let path = UIBezierPath(roundedRect: childViewController.view.bounds,
-                              byRoundingCorners: [.topLeft, .topRight],
-                              cornerRadii: CGSize(width: 10, height: 10))
-      let maskLayer = CAShapeLayer()
-      maskLayer.path = path.cgPath
-      childViewController.view.layer.mask = maskLayer
+    let path = UIBezierPath(
+      roundedRect: childViewController.view.bounds,
+      byRoundingCorners: [.topLeft, .topRight],
+      cornerRadii: CGSize(width: 10, height: 10)
+    )
+    let maskLayer = CAShapeLayer()
+    maskLayer.path = path.cgPath
+    childViewController.view.layer.mask = maskLayer
   }
 
   private func setUpOverlay() {
@@ -210,10 +215,12 @@ public class HSBottomSheet: UIViewController {
     let layout = ["H:|[overlay]|",
                   "V:|[overlay]|"]
     layout.forEach {
-      constraints += NSLayoutConstraint.constraints(withVisualFormat: $0,
-                                                    options: [],
-                                                    metrics: nil,
-                                                    views: ["overlay": overlay])
+      constraints += NSLayoutConstraint.constraints(
+        withVisualFormat: $0,
+        options: [],
+        metrics: nil,
+        views: ["overlay": overlay]
+      )
     }
     NSLayoutConstraint.activate(constraints)
   }
@@ -263,15 +270,12 @@ public class HSBottomSheet: UIViewController {
     ])
 
     if adjustForBottomSafeArea {
-      childViewController
-        .view
-        .bottomAnchor
-        .constraint(equalTo: containerView.bottomAnchor,
-                    constant: safeAreaInsets.bottom).isActive = true
+      childViewController.view.bottomAnchor.constraint(
+        equalTo: containerView.bottomAnchor,
+        constant: safeAreaInsets.bottom
+      ).isActive = true
     } else {
-      childViewController
-        .view
-        .bottomAnchor
+      childViewController.view.bottomAnchor
         .constraint(equalTo: containerView.bottomAnchor).isActive = true
     }
 
@@ -354,24 +358,27 @@ public class HSBottomSheet: UIViewController {
   }
 
   public func closeSheet(completion: (() -> Void)? = nil) {
-    UIView
-      .animate(withDuration: animationDuration,
-               delay: 0,
-               options: [.curveEaseIn],
-               animations: { [weak self] in
-                self?
-                  .containerView
-                  .transform = CGAffineTransform(translationX: 0,
-                                                 y: self?.containerView.frame.height ?? 0)
-                self?.view.backgroundColor = UIColor.clear
-        },
-               completion: { [weak self] complete in
-                self?.dismiss(animated: false, completion: completion)
-      })
+    UIView.animate(
+      withDuration: animationDuration,
+      delay: 0,
+      options: [.curveEaseIn],
+      animations: { [weak self] in
+        self?
+          .containerView
+          .transform = CGAffineTransform(translationX: 0,
+                                         y: self?.containerView.frame.height ?? 0)
+        self?.view.backgroundColor = UIColor.clear
+      },
+      completion: { [weak self] complete in
+        self?.dismiss(animated: false, completion: completion)
+      }
+    )
   }
 
-  override public func dismiss(animated flag: Bool,
-                               completion: (() -> Void)? = nil) {
+  override public func dismiss(
+    animated flag: Bool,
+    completion: (() -> Void)? = nil
+  ) {
     willDismiss?(self)
     super.dismiss(animated: flag) {
       self.didDismiss?(self)
@@ -385,7 +392,7 @@ public class HSBottomSheet: UIViewController {
       firstPanPoint = point
       actualContainerSize = .fixed(containerView.frame.height)
     }
-
+    
     let minHeight = min(height(for: actualContainerSize), height(for: orderedSheetSizes.first))
     let maxHeight = max(height(for: actualContainerSize), height(for: orderedSheetSizes.last))
 
@@ -400,82 +407,82 @@ public class HSBottomSheet: UIViewController {
     }
 
     switch gesture.state {
-    case .cancelled, .failed:
-      UIView
-      .animate(withDuration: animationDuration,
-               delay: 0,
-               options: [.curveEaseOut],
-               animations: {
-                self.containerView.transform = CGAffineTransform.identity
-                self
-                  .containerHeightConstraint?
-                  .constant = self.height(for: self.containerSize)
-      })
-    case .ended:
-      let velocity = (0.2 * gesture.velocity(in: self.view).y)
-      let finalHeight = velocity > 500 ? -1 : newHeight - offset - velocity
-      let animationDuration = TimeInterval(abs(velocity*0.0002) + 0.2)
+      case .cancelled, .failed:
+        UIView.animate(
+          withDuration: animationDuration,
+          delay: 0,
+          options: [.curveEaseOut],
+          animations: {
+            self.containerView.transform = CGAffineTransform.identity
+            self.containerHeightConstraint?.constant = self.height(for: self.containerSize)
+          }
+        )
+      case .ended:
+        let velocity = (0.2 * gesture.velocity(in: self.view).y)
+        let finalHeight = velocity > 500 ? -1 : newHeight - offset - velocity
+        let animationDuration = TimeInterval(abs(velocity*0.0002) + 0.2)
 
-      guard finalHeight >= (minHeight / 2) || !dismissOnPan else {
-        // Dismiss
-        UIView.animate(withDuration: animationDuration,
-                       delay: 0,
-                       options: [.curveEaseOut],
-                       animations: { [weak self] in
-                        self?
-                          .containerView
-                          .transform = CGAffineTransform(translationX: 0,
-                                                         y: self?
-                                                          .containerView
-                                                          .frame
-                                                          .height ?? 0)
-                        self?.view.backgroundColor = UIColor.clear
+        guard finalHeight >= (minHeight / 2) || !dismissOnPan else {
+          // Dismiss
+          UIView.animate(
+            withDuration: animationDuration,
+            delay: 0,
+            options: [.curveEaseOut],
+            animations: { [weak self] in
+              self?.containerView.transform = CGAffineTransform(
+                translationX: 0,
+                y: self?.containerView.frame.height ?? 0
+              )
+              self?.view.backgroundColor = UIColor.clear
+            },
+            completion: { [weak self] complete in
+              self?.dismiss(animated: false, completion: nil)
+            }
+          )
+          return
+        }
+
+        if point.y < 0 {
+          containerSize = orderedSheetSizes.last ?? containerSize
+          orderedSheetSizes.reversed().forEach {
+            containerSize = finalHeight < height(for: $0) ? $0 : containerSize
+          }
+        } else {
+          containerSize = orderedSheetSizes.first ?? containerSize
+          orderedSheetSizes.forEach {
+            containerSize = finalHeight > height(for: $0) ? $0 : containerSize
+          }
+        }
+
+        UIView.animate(
+          withDuration: animationDuration,
+          delay: 0,
+          options: [.curveEaseOut],
+          animations: {
+            self.containerView.transform = CGAffineTransform.identity
+            self
+              .containerHeightConstraint?
+              .constant = self.height(for: self.containerSize)
+            self.view.layoutIfNeeded()
           },
-                       completion: { [weak self] complete in
-                        self?.dismiss(animated: false, completion: nil)
-        })
-        return
-      }
-
-      if point.y < 0 {
-        containerSize = orderedSheetSizes.last ?? containerSize
-        orderedSheetSizes.reversed().forEach {
-          containerSize = finalHeight < height(for: $0) ? $0 : containerSize
-        }
-      } else {
-        containerSize = orderedSheetSizes.first ?? containerSize
-        orderedSheetSizes.forEach {
-          containerSize = finalHeight > height(for: $0) ? $0 : containerSize
-        }
-      }
-
-      UIView.animate(withDuration: animationDuration,
-                     delay: 0,
-                     options: [.curveEaseOut],
-                     animations: {
-                      self.containerView.transform = CGAffineTransform.identity
-                      self
-                        .containerHeightConstraint?
-                        .constant = self.height(for: self.containerSize)
-                      self.view.layoutIfNeeded()
-      },
-                     completion: { [weak self] complete in
-                      guard let `self` = self else { return }
-                      self.actualContainerSize = .fixed(self.containerView.frame.height)
-      })
-    default:
-      containerHeightConstraint?.constant = newHeight
-//      Constraints(for: containerView) { _ in
-//        self.containerHeightConstraint?.constant = newHeight
-//      }
-      containerView.transform = offset > 0 && dismissOnPan ?
-        CGAffineTransform(translationX: 0, y: offset) : .identity
+          completion: { [weak self] complete in
+            guard let `self` = self else { return }
+            self.actualContainerSize = .fixed(self.containerView.frame.height)
+          }
+        )
+      default:
+        containerHeightConstraint?.constant = newHeight
+        //      Constraints(for: containerView) { _ in
+        //        self.containerHeightConstraint?.constant = newHeight
+        //      }
+        containerView.transform = offset > 0 && dismissOnPan ?
+          CGAffineTransform(translationX: 0, y: offset) : .identity
     }
   }
 
   @objc func keyboardShown(_ notification: Notification) {
     guard let info = notification.userInfo,
-      let keyboardRect = (info[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
+          let keyboardRect = (info[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
 
     let windowRect = view.convert(view.bounds, to: nil)
     let actualHeight = windowRect.maxY - keyboardRect.origin.y
@@ -495,14 +502,16 @@ public class HSBottomSheet: UIViewController {
     let animationCurveRaw = animationCurveRawNSN?.uintValue ?? UIView.AnimationOptions.curveEaseInOut.rawValue
     let animationCurve = UIView.AnimationOptions(rawValue: animationCurveRaw)
 
-    UIView.animate(withDuration: duration,
-                   delay: 0,
-                   options: animationCurve,
-                   animations: {
-                    self.containerBottomConstraint?.constant = min(0, -height + (self.adjustForBottomSafeArea ? self.safeAreaInsets.bottom : 0))
-                    self.childViewController.view.setNeedsLayout()
-                    self.view.layoutIfNeeded()
-    })
+    UIView.animate(
+      withDuration: duration,
+      delay: 0,
+      options: animationCurve,
+      animations: {
+        self.containerBottomConstraint?.constant = min(0, -height + (self.adjustForBottomSafeArea ? self.safeAreaInsets.bottom : 0))
+        self.childViewController.view.setNeedsLayout()
+        self.view.layoutIfNeeded()
+      }
+    )
   }
 
   public func handleScrollView(_ scrollView: UIScrollView) {
@@ -514,28 +523,32 @@ public class HSBottomSheet: UIViewController {
   private func height(for size: SheetSize?) -> CGFloat {
     guard let size = size else { return 0 }
     switch (size) {
-    case .fixed(let height):
-      return height
-    case .fullScreen:
-      let insets = self.safeAreaInsets
-      return UIScreen.main.bounds.height - insets.top - 24
-    case .halfScreen:
-      return (UIScreen.main.bounds.height) / 2 + 24
+      case .fixed(let height):
+        return height
+      case .fullScreen:
+        let insets = self.safeAreaInsets
+        return UIScreen.main.bounds.height - insets.top - 24
+      case .halfScreen:
+        return (UIScreen.main.bounds.height) / 2 + 24
     }
   }
 }
 
 extension HSBottomSheet: UIGestureRecognizerDelegate {
-  public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
-                                shouldReceive touch: UITouch) -> Bool {
+  public func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldReceive touch: UITouch
+  ) -> Bool {
     guard let view = touch.view else { return true }
     return !(view is UIControl)
   }
 
   public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-    guard let panGestureRecognizer = gestureRecognizer as? InitialTouchPanGestureRecognizer,
+    guard
+      let panGestureRecognizer = gestureRecognizer as? InitialTouchPanGestureRecognizer,
       let childScrollView = childScrollView,
-      let point = panGestureRecognizer.initialTouchLocation else { return true }
+      let point = panGestureRecognizer.initialTouchLocation
+    else { return true }
 
     let pointInChildScrollView = view.convert(point, to: childScrollView).y - childScrollView.contentOffset.y
 
