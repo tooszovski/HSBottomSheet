@@ -44,7 +44,8 @@ public class HSBottomSheet: UIViewController {
   public var extendBackgroundBehindHandle: Bool = false {
     didSet {
       guard isViewLoaded else { return }
-      pullBarView.backgroundColor = extendBackgroundBehindHandle ? childViewController.view.backgroundColor : .clear
+      pullBarView.backgroundColor = extendBackgroundBehindHandle ?
+        childViewController.view.backgroundColor : .clear
       updateRoundedCorners()
     }
   }
@@ -120,8 +121,10 @@ public class HSBottomSheet: UIViewController {
     if (dismissable) {
       setUpDismissView()
 
-      let panGestureRecognizer = InitialTouchPanGestureRecognizer(target: self,
-                                                                  action: #selector(panned(_:)))
+      let panGestureRecognizer = InitialTouchPanGestureRecognizer(
+        target: self,
+        action: #selector(panned(_:))
+      )
       view.addGestureRecognizer(panGestureRecognizer)
       panGestureRecognizer.delegate = self
       self.panGestureRecognizer = panGestureRecognizer
@@ -159,6 +162,16 @@ public class HSBottomSheet: UIViewController {
     )
   }
 
+  public override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    super.viewWillTransition(to: size, with: coordinator)
+    if UIDevice.current.orientation.isPortrait,
+       orderedSheetSizes.count == 1,
+       let sheetSize = orderedSheetSizes.first
+    {
+      resize(to: sheetSize, animated: false, screenSize: size)
+    }
+  }
+
   public func setSizes(_ sizes: [SheetSize], animated: Bool = true) {
     guard sizes.count > 0 else {
       return
@@ -169,7 +182,14 @@ public class HSBottomSheet: UIViewController {
     resize(to: sizes[0], animated: animated)
   }
 
-  public func resize(to size: SheetSize, animated: Bool = true) {
+  public func resize(
+    to size: SheetSize,
+    animated: Bool = true,
+    screenSize: CGSize = CGSize(
+      width: UIScreen.main.bounds.width,
+      height: UIScreen.main.bounds.height
+    )
+  ) {
     if animated {
       UIView.animate(
         withDuration: 0.2,
@@ -177,13 +197,13 @@ public class HSBottomSheet: UIViewController {
         options: [.curveEaseOut],
         animations: { [weak self] in
           guard let `self` = self, let constraint = self.containerHeightConstraint else { return }
-          constraint.constant = self.height(for: size)
+          constraint.constant = self.height(for: size, screenSize: screenSize)
           self.view.layoutIfNeeded()
         },
         completion: nil
       )
     } else {
-      containerHeightConstraint?.constant = self.height(for: size)
+      containerHeightConstraint?.constant = self.height(for: size, screenSize: screenSize)
     }
     containerSize = size
     actualContainerSize = size
@@ -191,10 +211,7 @@ public class HSBottomSheet: UIViewController {
 
   private func updateLegacyRoundedCorners() {
     if #available(iOS 11.0, *) {
-      childViewController
-        .view
-        .layer
-        .maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
+      childViewController.view.layer.maskedCorners = [.layerMaxXMinYCorner, .layerMinXMinYCorner]
       return
     }
     let path = UIBezierPath(
@@ -241,8 +258,10 @@ public class HSBottomSheet: UIViewController {
 
     containerView.layer.masksToBounds = true
     containerView.backgroundColor = UIColor.clear
-    containerView.transform = CGAffineTransform(translationX: 0,
-                                                y: UIScreen.main.bounds.height)
+    containerView.transform = CGAffineTransform(
+      translationX: 0,
+      y: UIScreen.main.bounds.height
+    )
 
     let whiteView = UIView(frame: .zero)
     whiteView.translatesAutoresizingMaskIntoConstraints = false
@@ -275,8 +294,7 @@ public class HSBottomSheet: UIViewController {
         constant: safeAreaInsets.bottom
       ).isActive = true
     } else {
-      childViewController.view.bottomAnchor
-        .constraint(equalTo: containerView.bottomAnchor).isActive = true
+      childViewController.view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
     }
 
     childViewController.view.layer.masksToBounds = true
@@ -288,7 +306,8 @@ public class HSBottomSheet: UIViewController {
     if #available(iOS 11.0, *) {
       let controllerWithRoundedCorners = extendBackgroundBehindHandle ? containerView : childViewController.view
       let controllerWithoutRoundedCorners = extendBackgroundBehindHandle ? childViewController.view : containerView
-      controllerWithRoundedCorners?.layer.maskedCorners = topCornersRadius > 0 ? [.layerMaxXMinYCorner, .layerMinXMinYCorner] : []
+      controllerWithRoundedCorners?.layer.maskedCorners = topCornersRadius > 0 ?
+        [.layerMaxXMinYCorner, .layerMinXMinYCorner] : []
       controllerWithRoundedCorners?.layer.cornerRadius = topCornersRadius
       controllerWithoutRoundedCorners?.layer.maskedCorners = []
       controllerWithoutRoundedCorners?.layer.cornerRadius = 0
@@ -312,8 +331,10 @@ public class HSBottomSheet: UIViewController {
     dismissAreaView.backgroundColor = UIColor.clear
     dismissAreaView.isUserInteractionEnabled = true
 
-    let tapGestureRecognizer = UITapGestureRecognizer(target: self,
-                                                      action: #selector(dismissTapped))
+    let tapGestureRecognizer = UITapGestureRecognizer(
+      target: self,
+      action: #selector(dismissTapped)
+    )
     dismissAreaView.addGestureRecognizer(tapGestureRecognizer)
   }
 
@@ -347,9 +368,12 @@ public class HSBottomSheet: UIViewController {
     pullBarView.isAccessibilityElement = true
     pullBarView.accessibilityLabel = "Pull bar"
     pullBarView.accessibilityHint = "Tap on this bar to dismiss the modal"
-    pullBarView
-      .addGestureRecognizer(UITapGestureRecognizer(target: self,
-                                                   action: #selector(dismissTapped)))
+    pullBarView.addGestureRecognizer(
+      UITapGestureRecognizer(
+        target: self,
+        action: #selector(dismissTapped)
+      )
+    )
   }
 
   @objc func dismissTapped() {
@@ -363,10 +387,10 @@ public class HSBottomSheet: UIViewController {
       delay: 0,
       options: [.curveEaseIn],
       animations: { [weak self] in
-        self?
-          .containerView
-          .transform = CGAffineTransform(translationX: 0,
-                                         y: self?.containerView.frame.height ?? 0)
+        self?.containerView.transform = CGAffineTransform(
+            translationX: 0,
+            y: self?.containerView.frame.height ?? 0
+          )
         self?.view.backgroundColor = UIColor.clear
       },
       completion: { [weak self] complete in
@@ -392,7 +416,7 @@ public class HSBottomSheet: UIViewController {
       firstPanPoint = point
       actualContainerSize = .fixed(containerView.frame.height)
     }
-    
+
     let minHeight = min(height(for: actualContainerSize), height(for: orderedSheetSizes.first))
     let maxHeight = max(height(for: actualContainerSize), height(for: orderedSheetSizes.last))
 
@@ -407,8 +431,9 @@ public class HSBottomSheet: UIViewController {
     }
 
     switch gesture.state {
-      case .cancelled, .failed:
-        UIView.animate(
+    case .cancelled, .failed:
+      UIView
+        .animate(
           withDuration: animationDuration,
           delay: 0,
           options: [.curveEaseOut],
@@ -417,66 +442,63 @@ public class HSBottomSheet: UIViewController {
             self.containerHeightConstraint?.constant = self.height(for: self.containerSize)
           }
         )
-      case .ended:
-        let velocity = (0.2 * gesture.velocity(in: self.view).y)
-        let finalHeight = velocity > 500 ? -1 : newHeight - offset - velocity
-        let animationDuration = TimeInterval(abs(velocity*0.0002) + 0.2)
+    case .ended:
+      let velocity = (0.2 * gesture.velocity(in: self.view).y)
+      let finalHeight = velocity > 500 ? -1 : newHeight - offset - velocity
+      let animationDuration = TimeInterval(abs(velocity*0.0002) + 0.2)
 
-        guard finalHeight >= (minHeight / 2) || !dismissOnPan else {
-          // Dismiss
-          UIView.animate(
-            withDuration: animationDuration,
-            delay: 0,
-            options: [.curveEaseOut],
-            animations: { [weak self] in
-              self?.containerView.transform = CGAffineTransform(
-                translationX: 0,
-                y: self?.containerView.frame.height ?? 0
-              )
-              self?.view.backgroundColor = UIColor.clear
-            },
-            completion: { [weak self] complete in
-              self?.dismiss(animated: false, completion: nil)
-            }
-          )
-          return
-        }
-
-        if point.y < 0 {
-          containerSize = orderedSheetSizes.last ?? containerSize
-          orderedSheetSizes.reversed().forEach {
-            containerSize = finalHeight < height(for: $0) ? $0 : containerSize
-          }
-        } else {
-          containerSize = orderedSheetSizes.first ?? containerSize
-          orderedSheetSizes.forEach {
-            containerSize = finalHeight > height(for: $0) ? $0 : containerSize
-          }
-        }
-
+      guard finalHeight >= (minHeight / 2) || !dismissOnPan else {
+        // Dismiss
         UIView.animate(
           withDuration: animationDuration,
           delay: 0,
           options: [.curveEaseOut],
-          animations: {
-            self.containerView.transform = CGAffineTransform.identity
-            self
-              .containerHeightConstraint?
-              .constant = self.height(for: self.containerSize)
-            self.view.layoutIfNeeded()
+          animations: { [weak self] in
+            self?.containerView.transform = CGAffineTransform(
+              translationX: 0,
+              y: self?.containerView.frame.height ?? 0
+            )
+            self?.view.backgroundColor = UIColor.clear
           },
           completion: { [weak self] complete in
-            guard let `self` = self else { return }
-            self.actualContainerSize = .fixed(self.containerView.frame.height)
-          }
-        )
-      default:
-        containerHeightConstraint?.constant = newHeight
-        //      Constraints(for: containerView) { _ in
-        //        self.containerHeightConstraint?.constant = newHeight
-        //      }
-        containerView.transform = offset > 0 && dismissOnPan ?
-          CGAffineTransform(translationX: 0, y: offset) : .identity
+            self?.dismiss(animated: false, completion: nil)
+          })
+        return
+      }
+
+      if point.y < 0 {
+        containerSize = orderedSheetSizes.last ?? containerSize
+        orderedSheetSizes.reversed().forEach {
+          containerSize = finalHeight < height(for: $0) ? $0 : containerSize
+        }
+      } else {
+        containerSize = orderedSheetSizes.first ?? containerSize
+        orderedSheetSizes.forEach {
+          containerSize = finalHeight > height(for: $0) ? $0 : containerSize
+        }
+      }
+
+      UIView.animate(
+        withDuration: animationDuration,
+        delay: 0,
+        options: [.curveEaseOut],
+        animations: {
+          self.containerView.transform = CGAffineTransform.identity
+          self.containerHeightConstraint?.constant = self.height(for: self.containerSize)
+          self.view.layoutIfNeeded()
+        },
+        completion: { [weak self] complete in
+          guard let `self` = self else { return }
+          self.actualContainerSize = .fixed(self.containerView.frame.height)
+        }
+      )
+    default:
+      containerHeightConstraint?.constant = newHeight
+      //      Constraints(for: containerView) { _ in
+      //        self.containerHeightConstraint?.constant = newHeight
+      //      }
+      containerView.transform = offset > 0 && dismissOnPan ?
+        CGAffineTransform(translationX: 0, y: offset) : .identity
     }
   }
 
@@ -507,7 +529,8 @@ public class HSBottomSheet: UIViewController {
       delay: 0,
       options: animationCurve,
       animations: {
-        self.containerBottomConstraint?.constant = min(0, -height + (self.adjustForBottomSafeArea ? self.safeAreaInsets.bottom : 0))
+        self.containerBottomConstraint?.constant = min(0, -height + (self.adjustForBottomSafeArea
+                                                                      ? self.safeAreaInsets.bottom : 0))
         self.childViewController.view.setNeedsLayout()
         self.view.layoutIfNeeded()
       }
@@ -520,25 +543,23 @@ public class HSBottomSheet: UIViewController {
     childScrollView = scrollView
   }
 
-  private func height(for size: SheetSize?) -> CGFloat {
+  private func height(for size: SheetSize?, screenSize: CGSize = UIScreen.main.bounds.size) -> CGFloat {
     guard let size = size else { return 0 }
     switch (size) {
-      case .fixed(let height):
-        return height
-      case .fullScreen:
-        let insets = self.safeAreaInsets
-        return UIScreen.main.bounds.height - insets.top - 24
-      case .halfScreen:
-        return (UIScreen.main.bounds.height) / 2 + 24
+    case .fixed(let height):
+      return height
+    case .fullScreen:
+      let insets = self.safeAreaInsets
+      return screenSize.height - insets.top - 24
+    case .halfScreen:
+      return screenSize.height / 2 + 24
     }
   }
 }
 
 extension HSBottomSheet: UIGestureRecognizerDelegate {
-  public func gestureRecognizer(
-    _ gestureRecognizer: UIGestureRecognizer,
-    shouldReceive touch: UITouch
-  ) -> Bool {
+  public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                                shouldReceive touch: UITouch) -> Bool {
     guard let view = touch.view else { return true }
     return !(view is UIControl)
   }
@@ -547,8 +568,7 @@ extension HSBottomSheet: UIGestureRecognizerDelegate {
     guard
       let panGestureRecognizer = gestureRecognizer as? InitialTouchPanGestureRecognizer,
       let childScrollView = childScrollView,
-      let point = panGestureRecognizer.initialTouchLocation
-    else { return true }
+      let point = panGestureRecognizer.initialTouchLocation else { return true }
 
     let pointInChildScrollView = view.convert(point, to: childScrollView).y - childScrollView.contentOffset.y
 
@@ -564,7 +584,8 @@ extension HSBottomSheet: UIGestureRecognizerDelegate {
 
     if velocity.y < 0 {
       let containerHeight = height(for: containerSize)
-      return height(for: orderedSheetSizes.last) > containerHeight && containerHeight < height(for: SheetSize.fullScreen)
+      return height(for: orderedSheetSizes.last) > containerHeight
+        && containerHeight < height(for: SheetSize.fullScreen)
     } else {
       return true
     }
